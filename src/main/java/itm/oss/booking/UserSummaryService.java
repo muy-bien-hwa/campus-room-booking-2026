@@ -1,5 +1,6 @@
 package itm.oss.booking;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,10 +18,10 @@ public final class UserSummaryService {
         }
 
         String requestedUserId = userId.trim();
-        int bookingCount;
-        long totalMinutes;
+        int bookingCount = 0;
+        long totalMinutes = 0;
         List<String> distinctRooms = new ArrayList<>();
-        double averageMinutes;
+        double averageMinutes = 0;
 
         for (Booking booking : bookings) {
             if (booking.getStatus() != BookingStatus.ACTIVE) {
@@ -36,7 +37,7 @@ public final class UserSummaryService {
             }
 
             bookingCount++;
-            totalMinutes += Duration.between(start, end).toMinutes();
+            totalMinutes += Duration.between(booking.getStart(), booking.getEnd()).toMinutes();
             
         }
 
@@ -46,6 +47,6 @@ public final class UserSummaryService {
             averageMinutes = (float) totalMinutes / bookingCount;
         }
 
-        return new UserBookingSummary(bookingCount, totalMinutes, rooms.size(), averageMinutes);
+        return new UserBookingSummary(bookingCount, totalMinutes, distinctRooms.size(), averageMinutes);
     }
 }
