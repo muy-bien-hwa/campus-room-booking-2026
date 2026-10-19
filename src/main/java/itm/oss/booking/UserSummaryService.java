@@ -44,7 +44,7 @@ public final class UserSummaryService {
         if (bookingCount == 0) {
             averageMinutes = 0;
         } else {
-            averageMinutes = (float) totalMinutes / bookingCount;
+            averageMinutes = (double) totalMinutes / bookingCount;
         }
 
         return new UserBookingSummary(bookingCount, totalMinutes, distinctRooms.size(), averageMinutes);
