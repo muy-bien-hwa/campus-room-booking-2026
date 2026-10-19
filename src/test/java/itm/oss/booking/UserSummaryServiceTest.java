@@ -100,4 +100,56 @@ class UserSummaryServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> UserSummaryService.summarize(bookings, userId));
     }
+
+    // ----- Additional edge cases -----
+
+    // docs/ASSUMPTIONS.md: "I6 counts distinct canonical room IDs exactly."
+    // User IDs are case-insensitive, but room IDs are NOT: R101 and r101 are two rooms.
+    @Test
+    void countsRoomIdsExactlyWithoutIgnoringCase() {
+        List<Booking> bookings = List.of(
+                booking(1, "s2026001", "R101", "2026-10-02T10:00", "2026-10-02T11:00", BookingStatus.ACTIVE),  // 60
+                booking(2, "s2026001", "r101", "2026-10-03T10:00", "2026-10-03T10:30", BookingStatus.ACTIVE)); // 30
+
+        UserBookingSummary summary = UserSummaryService.summarize(bookings, "s2026001");
+
+        assertSummary(summary, 2, 90, 2, 45.0);
+    }
+
+    // 52.5 can be stored exactly even in a float, so it cannot detect precision loss.
+    // 151 / 3 = 50.333... is a repeating decimal, so the average must keep double precision.
+    @Test
+    void averageKeepsDoublePrecisionForRepeatingDecimals() {
+        List<Booking> bookings = List.of(
+                booking(1, "s2026001", "R101", "2026-10-02T10:00", "2026-10-02T11:00", BookingStatus.ACTIVE),  // 60
+                booking(2, "s2026001", "R102", "2026-10-02T12:00", "2026-10-02T13:00", BookingStatus.ACTIVE),  // 60
+                booking(3, "s2026001", "R103", "2026-10-02T14:00", "2026-10-02T14:31", BookingStatus.ACTIVE)); // 31
+
+        UserBookingSummary summary = UserSummaryService.summarize(bookings, "s2026001");
+
+        assertSummary(summary, 3, 151, 3, 151.0 / 3);
+    }
+
+    // Validation must happen before looking at the list,
+    // so an invalid userId is rejected even when there are no bookings.
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"   "})
+    void rejectsNullOrBlankUserIdEvenWhenListIsEmpty(String userId) {
+        assertThrows(IllegalArgumentException.class,
+                () -> UserSummaryService.summarize(List.of(), userId));
+    }
+
+    // Matching ignores case, but the whole ID must still match (no prefix/partial matching).
+    @Test
+    void doesNotMatchUserIdsThatOnlyPartiallyMatch() {
+        List<Booking> bookings = List.of(
+                booking(1, "s20260010", "R101", "2026-10-02T10:00", "2026-10-02T11:00", BookingStatus.ACTIVE),
+                booking(2, "s202600", "R102", "2026-10-02T10:00", "2026-10-02T11:00", BookingStatus.ACTIVE));
+
+        UserBookingSummary summary = UserSummaryService.summarize(bookings, "s2026001");
+
+        assertSummary(summary, 0, 0, 0, 0.0);
+    }
 }
+
