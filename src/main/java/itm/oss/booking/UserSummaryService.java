@@ -1,7 +1,8 @@
 package itm.oss.booking;
 
 import java.time.Duration;
-import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 
 public final class UserSummaryService {
@@ -20,7 +21,7 @@ public final class UserSummaryService {
         String requestedUserId = userId.trim();
         int bookingCount = 0;
         long totalMinutes = 0;
-        List<String> distinctRooms = new ArrayList<>();
+        Set<String> distinctRooms = new HashSet<>();
         double averageMinutes = 0;
 
         for (Booking booking : bookings) {
@@ -32,9 +33,7 @@ public final class UserSummaryService {
                 continue;  // only userId's bookings
             }
 
-            if(!distinctRooms.contains(booking.getRoomId())) {
-                distinctRooms.add(booking.getRoomId());
-            }
+            distinctRooms.add(booking.getRoomId()); // not overlap checking needed because distinctRooms is HashSet type
 
             bookingCount++;
             totalMinutes += Duration.between(booking.getStart(), booking.getEnd()).toMinutes();
