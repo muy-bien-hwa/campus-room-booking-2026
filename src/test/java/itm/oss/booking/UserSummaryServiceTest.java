@@ -130,8 +130,8 @@ class UserSummaryServiceTest {
         assertSummary(summary, 3, 151, 3, 151.0 / 3);
     }
 
-    // Validation must happen before looking at the list,
-    // so an invalid userId is rejected even when there are no bookings.
+    // An empty list must not skip userId validation,
+    // e.g. through an early return for empty input placed before the check.
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = {"   "})
